@@ -12,14 +12,14 @@ namespace SVGImporter.Geometry
 
 
     // 分顶点数据
-    struct SliceVerticeData {
+    class SliceVerticeData {
         public int totalVertices;
 
         public int opaqueTriangles;
         public int transparentTriangles;
     }
 
-    struct VerticeData {
+    class VerticeData {
         public Vector3[] vertices;
         public Color32[] colors32;
         public Vector2[] uv;
@@ -141,21 +141,20 @@ namespace SVGImporter.Geometry
             
             int totalVertices = 0, vertexCount, vertexStart = 0, currentVertex;
             int layerIndex = 0;
-            const int sliceLayerNum = 1; // 分层个数
-            List<SliceVerticeData> subMeshList = new List<SliceVerticeData>();
+            const int sliceLayerNum = 10; // 分层个数
+            List<SliceVerticeData> sliceLayerList = new List<SliceVerticeData>();
             for(int i = 0; i < totalLayers; i++)
             {
                 if (i % sliceLayerNum == 0) {
-                    Debug.Log("slice index:" + i);
-                    SliceVerticeData itemData = new SliceVerticeData();
-                    itemData.totalVertices = totalVertices;
-                    itemData.transparentTriangles = transparentTriangles;
-                    itemData.opaqueTriangles = opaqueTriangles;
-                    subMeshList.Add(itemData);
+                    layerIndex = i / sliceLayerNum;
+                    SliceVerticeData sliceLayerData = new SliceVerticeData();
+                    sliceLayerData.totalVertices = totalVertices;
+                    sliceLayerData.transparentTriangles = transparentTriangles;
+                    sliceLayerData.opaqueTriangles = opaqueTriangles;
+                    sliceLayerList.Add(sliceLayerData);
                     totalVertices = 0;
                     transparentTriangles = 0;
                     opaqueTriangles = 0;
-                    layerIndex += 1;
                 }
                 int totalShapes = layers[i].shapes.Length;
                 for(int j = 0; j < totalShapes; j++)
@@ -172,6 +171,10 @@ namespace SVGImporter.Geometry
                     vertexCount = layers[i].shapes[j].vertices.Length;
                     totalVertices += vertexCount;
                 }
+                Debug.Log("layerIndex = " + layerIndex + ", totalVertices = " + totalVertices);
+                sliceLayerList[layerIndex].totalVertices = totalVertices;
+                sliceLayerList[layerIndex].transparentTriangles = transparentTriangles;
+                sliceLayerList[layerIndex].opaqueTriangles = opaqueTriangles;
             }
             
             if(useGradients == SVGUseGradients.Never) hasGradients = false;
@@ -207,14 +210,15 @@ namespace SVGImporter.Geometry
                 }
             }
 
-            VerticeData[] verticeDatas = new VerticeData[subMeshList.Count];
-            for (int m = 0; m < subMeshList.Count; m++) 
+            VerticeData[] verticeDatas = new VerticeData[sliceLayerList.Count];
+            for (int m = 0; m < sliceLayerList.Count; m++) 
             {
-                opaqueTriangles = subMeshList[m].opaqueTriangles;
-                totalVertices = subMeshList[m].totalVertices;
-                transparentTriangles = subMeshList[m].transparentTriangles;
+                opaqueTriangles = sliceLayerList[m].opaqueTriangles;
+                totalVertices = sliceLayerList[m].totalVertices;
+                transparentTriangles = sliceLayerList[m].transparentTriangles;
                 totalTriangles = opaqueTriangles + transparentTriangles;
 
+                verticeDatas[m] = new VerticeData();
                 verticeDatas[m].vertices = new Vector3[totalVertices];
                 verticeDatas[m].colors32 = new Color32[totalVertices];
                 verticeDatas[m].uv = null;
@@ -242,18 +246,16 @@ namespace SVGImporter.Geometry
             Vector2[] uv2 = null;
             Vector3[] normals = null;
 
-            vertexStart = 0;
-
             for(int i = 0; i < totalLayers; i++)
             {
                 if (i % sliceLayerNum == 0) {
                     vertexStart = 0;
+                    layerIndex = i / sliceLayerNum;
                     vertices = verticeDatas[layerIndex].vertices;
                     colors32 = verticeDatas[layerIndex].colors32;
                     uv = verticeDatas[layerIndex].uv;
                     uv2 = verticeDatas[layerIndex].uv2;
                     normals = verticeDatas[layerIndex].normals;
-                    layerIndex += 1;
                 }
 
                 int totalShapes = layers[i].shapes.Length;
@@ -284,6 +286,7 @@ namespace SVGImporter.Geometry
                         for(int k = 0; k < vertexCount; k++)
                         {
                             currentVertex = vertexStart + k;
+                            Debug.Log("currentVertex = " + currentVertex + ", vertexCount = " + vertexCount + ", k = " + k + ", vertices.Length = " + vertices.Length);
                             vertices[currentVertex] = layers[i].shapes[j].vertices[k];
                             if (useOpaqueShader)
                             {
@@ -384,7 +387,6 @@ namespace SVGImporter.Geometry
                 }
             }
             
-            layerIndex = 0;
             int[][] triangles = verticeDatas[0].triangles;
 
             // Submesh Order
@@ -402,7 +404,7 @@ namespace SVGImporter.Geometry
                         lastOpauqeTriangleIndex = 0;
                         lastVertexIndex = 0;
                         triangles = verticeDatas[layerIndex].triangles;
-                        layerIndex += 1;
+                        layerIndex = i / sliceLayerNum;
                     }
 
                     int totalShapes = layers[i].shapes.Length;
@@ -428,17 +430,17 @@ namespace SVGImporter.Geometry
                 
                 for(int i = 0; i < totalLayers; i++)
                 {
+                    if (i % sliceLayerNum == 0) {
+                        lastTriangleIndex = 0;
+                        lastVertexIndex = 0;
+                        vertexStart = 0;
+                        layerIndex = i / sliceLayerNum;
+                        triangles = verticeDatas[layerIndex].triangles;
+                    }
                     int totalShapes = layers[i].shapes.Length;
                     for(int j = 0; j < totalShapes; j++)
                     {
                         triangleCount = layers[i].shapes[j].triangles.Length;
-                        if (vertexStart + triangleCount > 56000) {
-                            lastTriangleIndex = 0;
-                            lastVertexIndex = 0;
-                            vertexStart = 0;
-                            layerIndex += 1;
-                            triangles = verticeDatas[layerIndex].triangles;
-                        }
                         for(int k = 0; k < triangleCount; k++) {
                             triangles[0][lastTriangleIndex++] = lastVertexIndex + layers[i].shapes[j].triangles[k];
                         }
@@ -454,8 +456,8 @@ namespace SVGImporter.Geometry
             *      Mesh Creation                          *
             *                                             *
             * * * * * * * * * * * * * * * * * * * * * * * */
-            meshs = new Mesh[subMeshList.Count];
-            for (int n = 0; n < subMeshList.Count; n++) 
+            meshs = new Mesh[sliceLayerList.Count];
+            for (int n = 0; n < sliceLayerList.Count; n++) 
             {
                 vertices = verticeDatas[n].vertices;
                 colors32 = verticeDatas[n].colors32;
@@ -464,10 +466,11 @@ namespace SVGImporter.Geometry
                 normals = verticeDatas[n].normals;
                 triangles = verticeDatas[n].triangles;
 
-                Mesh mesh = meshs[n];   
+                Mesh mesh = new Mesh();   
                 mesh.Clear();
                 mesh.MarkDynamic();
-                
+                meshs[n] = mesh;
+
                 if(vertices != null) {
                     if(vertices.Length > 65000) {
                         Debug.LogError("A mesh may not have more than 65000 vertices. Please try to reduce quality or split SVG file.");

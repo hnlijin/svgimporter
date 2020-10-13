@@ -23,7 +23,13 @@ public class RealtimeImportDemo : MonoBehaviour {
         // }
 
         svgAsset = SVGAsset.Load(TxtFile.text);
+        Debug.Log("load svg asset count: " + svgAsset.Count);
+        for (int i = 1; i < svgAsset.Count; i++) {
+            SVGImage newSVGImage = Instantiate(preview, preview.transform.position, preview.transform.rotation, preview.transform.parent);
+            newSVGImage.vectorGraphics = svgAsset[i];
+        }
         preview.vectorGraphics = svgAsset[0];
+        
     }
 
 }
