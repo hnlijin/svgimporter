@@ -592,7 +592,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   preview: {fileID: 937167413}
   svgInput: {fileID: 1618979076}
-  TxtFile: {fileID: 4900000, guid: dbd67f29fcafbe44d982c2461d86d827, type: 3}
+  TxtFile: {fileID: 4900000, guid: e895503593e8da940af69f021b85a3ff, type: 3}
 --- !u!1 &1407548399
 GameObject:
   m_ObjectHideFlags: 0
