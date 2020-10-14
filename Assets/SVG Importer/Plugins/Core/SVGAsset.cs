@@ -1360,7 +1360,7 @@ namespace SVGImporter
 
             Mesh[] meshs = null;
 
-            // try {
+            try {
                 rootSVGElement.Render();
 
                 Rect viewport = rootSVGElement.paintable.viewport;
@@ -1499,10 +1499,10 @@ namespace SVGImporter
                         asset._sharedGradients = gradients;
                     }
                 }
-            // } catch(System.Exception exception) {
-            //     Debug.LogWarning("Asset Failed to import\n"+exception.Message);
-            //     errors.Add(SVGError.CorruptedFile);
-            // }
+            } catch(System.Exception exception) {
+                Debug.LogWarning("Asset Failed to import\n"+exception.Message);
+                errors.Add(SVGError.CorruptedFile);
+            }
 
             asset._documentAsset = SVGDocumentAsset.CreateInstance(svgText, errors.ToArray());
             if(svgDocument != null) svgDocument.Clear();

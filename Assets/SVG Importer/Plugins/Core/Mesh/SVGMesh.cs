@@ -14,12 +14,11 @@ namespace SVGImporter.Geometry
     // 分顶点数据
     class SliceVerticeData {
         public int totalVertices;
-
         public int opaqueTriangles;
         public int transparentTriangles;
     }
 
-    class VerticeData {
+    class SliceMeshData {
         public Vector3[] vertices;
         public Color32[] colors32;
         public Vector2[] uv;
@@ -141,17 +140,15 @@ namespace SVGImporter.Geometry
             
             int totalVertices = 0, vertexCount, vertexStart = 0, currentVertex;
             int layerIndex = 0;
-            const int sliceLayerNum = 10; // 分层个数
+            const int sliceLayerNum = 300; // 分层个数
             List<SliceVerticeData> sliceLayerList = new List<SliceVerticeData>();
             for(int i = 0; i < totalLayers; i++)
             {
                 if (i % sliceLayerNum == 0) {
                     layerIndex = i / sliceLayerNum;
                     SliceVerticeData sliceLayerData = new SliceVerticeData();
-                    sliceLayerData.totalVertices = totalVertices;
-                    sliceLayerData.transparentTriangles = transparentTriangles;
-                    sliceLayerData.opaqueTriangles = opaqueTriangles;
                     sliceLayerList.Add(sliceLayerData);
+                    Debug.Log("i = " + i + ", layerIndex = " + layerIndex + ", totalVertices = " + totalVertices);
                     totalVertices = 0;
                     transparentTriangles = 0;
                     opaqueTriangles = 0;
@@ -171,7 +168,6 @@ namespace SVGImporter.Geometry
                     vertexCount = layers[i].shapes[j].vertices.Length;
                     totalVertices += vertexCount;
                 }
-                Debug.Log("layerIndex = " + layerIndex + ", totalVertices = " + totalVertices);
                 sliceLayerList[layerIndex].totalVertices = totalVertices;
                 sliceLayerList[layerIndex].transparentTriangles = transparentTriangles;
                 sliceLayerList[layerIndex].opaqueTriangles = opaqueTriangles;
@@ -210,7 +206,7 @@ namespace SVGImporter.Geometry
                 }
             }
 
-            VerticeData[] verticeDatas = new VerticeData[sliceLayerList.Count];
+            SliceMeshData[] verticeDatas = new SliceMeshData[sliceLayerList.Count];
             for (int m = 0; m < sliceLayerList.Count; m++) 
             {
                 opaqueTriangles = sliceLayerList[m].opaqueTriangles;
@@ -218,7 +214,7 @@ namespace SVGImporter.Geometry
                 transparentTriangles = sliceLayerList[m].transparentTriangles;
                 totalTriangles = opaqueTriangles + transparentTriangles;
 
-                verticeDatas[m] = new VerticeData();
+                verticeDatas[m] = new SliceMeshData();
                 verticeDatas[m].vertices = new Vector3[totalVertices];
                 verticeDatas[m].colors32 = new Color32[totalVertices];
                 verticeDatas[m].uv = null;
@@ -286,13 +282,10 @@ namespace SVGImporter.Geometry
                         for(int k = 0; k < vertexCount; k++)
                         {
                             currentVertex = vertexStart + k;
-                            Debug.Log("currentVertex = " + currentVertex + ", vertexCount = " + vertexCount + ", k = " + k + ", vertices.Length = " + vertices.Length);
                             vertices[currentVertex] = layers[i].shapes[j].vertices[k];
-                            if (useOpaqueShader)
-                            {
+                            if (useOpaqueShader) {
                                 vertices[currentVertex].z = layers[i].shapes[j].depth * -SVGAssetImport.minDepthOffset;
-                            } else
-                            {
+                            } else {
                                 vertices[currentVertex].z = layers[i].shapes[j].depth;
                             }
                             colors32[currentVertex] = finalColor;
@@ -375,8 +368,7 @@ namespace SVGImporter.Geometry
                         {
                             if(layers[i].shapes[j].angles != null && layers[i].shapes[j].angles.Length == vertexCount)
                             {
-                                for(int k = 0; k < vertexCount; k++)
-                                {
+                                for(int k = 0; k < vertexCount; k++) {
                                     currentVertex = vertexStart + k;
                                     normals[currentVertex] = layers[i].shapes[j].angles[k];
                                 }
@@ -387,7 +379,7 @@ namespace SVGImporter.Geometry
                 }
             }
             
-            int[][] triangles = verticeDatas[0].triangles;
+            int[][] triangles = null;
 
             // Submesh Order
             if(useOpaqueShader && useTransparentShader)
@@ -402,9 +394,9 @@ namespace SVGImporter.Geometry
                     if (i % sliceLayerNum == 0) {
                         lastTransparentTriangleIndex = 0;
                         lastOpauqeTriangleIndex = 0;
-                        lastVertexIndex = 0;
-                        triangles = verticeDatas[layerIndex].triangles;
+                        // lastVertexIndex = 0;
                         layerIndex = i / sliceLayerNum;
+                        triangles = verticeDatas[layerIndex].triangles;
                     }
 
                     int totalShapes = layers[i].shapes.Length;
@@ -427,12 +419,13 @@ namespace SVGImporter.Geometry
                 int lastVertexIndex = 0;
                 int triangleCount;
                 int lastTriangleIndex = 0;
+                int lastVerticesCount = 0;
                 
                 for(int i = 0; i < totalLayers; i++)
                 {
                     if (i % sliceLayerNum == 0) {
                         lastTriangleIndex = 0;
-                        lastVertexIndex = 0;
+                        lastVertexIndex = lastVerticesCount;
                         vertexStart = 0;
                         layerIndex = i / sliceLayerNum;
                         triangles = verticeDatas[layerIndex].triangles;
@@ -441,10 +434,11 @@ namespace SVGImporter.Geometry
                     for(int j = 0; j < totalShapes; j++)
                     {
                         triangleCount = layers[i].shapes[j].triangles.Length;
+                        lastVerticesCount = layers[i].shapes[j].vertices.Length;
                         for(int k = 0; k < triangleCount; k++) {
                             triangles[0][lastTriangleIndex++] = lastVertexIndex + layers[i].shapes[j].triangles[k];
                         }
-                        lastVertexIndex += layers[i].shapes[j].vertices.Length;
+                        lastVertexIndex += lastVerticesCount;
                     }
                 }
             }
