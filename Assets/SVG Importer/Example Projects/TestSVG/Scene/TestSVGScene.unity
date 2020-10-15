@@ -261,8 +261,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Load
+      - m_Target: {fileID: 181576246}
+        m_MethodName: TestSVG_10_10
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -463,7 +463,7 @@ GameObject:
   - component: {fileID: 181576245}
   - component: {fileID: 181576246}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: GameMap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -504,7 +504,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   svgObject: {fileID: 1086940026}
-  contentLayer: {fileID: 0}
+  contentLayer: {fileID: 1185040407}
 --- !u!1 &197461919
 GameObject:
   m_ObjectHideFlags: 0
@@ -767,7 +767,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u6D4B\u8BD54"
+  m_Text: "\u6D4B\u8BD520X20"
 --- !u!222 &263514112
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1603,7 +1603,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u6D4B\u8BD56"
+  m_Text: "\u6E05\u9664\u6D4B\u8BD5"
 --- !u!222 &533882904
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2923,8 +2923,8 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1086940026}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.1, y: 0.1, z: 1}
   m_Children: []
   m_Father: {fileID: 181576245}
   m_RootOrder: 7
@@ -3453,8 +3453,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Load
+      - m_Target: {fileID: 181576246}
+        m_MethodName: ClearContentLayer
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3639,7 +3639,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u6D4B\u8BD55"
+  m_Text: "\u6D4B\u8BD510X10"
 --- !u!222 &1253824407
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3908,8 +3908,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: Load
+      - m_Target: {fileID: 181576246}
+        m_MethodName: TestSVG_20_20
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -4324,7 +4324,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 181576246}
-        m_MethodName: TestSVG
+        m_MethodName: TestSVG_40_40
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

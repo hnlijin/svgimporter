@@ -21,6 +21,7 @@ public class HUDLayer : MonoBehaviour {
 				Destroy(svgAsset[i]);
 			}
 			svgAsset = null;
+			preview.vectorGraphics = null;
 			gameMap.ClearContentLayer();
         }
 	}
