@@ -31,6 +31,10 @@ public class HUDLayer : MonoBehaviour {
 		if (TxtFile1 == null) return;
 		clearSvgAsset();
         svgAsset = SVGAsset.Load(TxtFile1.text);
+		for (int i = 1; i < svgAsset.Count; i++) {
+			GameObject svgGameObject = Instantiate(preview.gameObject, preview.transform.position, preview.transform.rotation, gameMap.contentLayer.transform);
+			svgGameObject.GetComponent<SVGRenderer>().vectorGraphics = svgAsset[i];
+		}
         preview.vectorGraphics = svgAsset[0];
     }
 
@@ -39,8 +43,24 @@ public class HUDLayer : MonoBehaviour {
 		if (TxtFile2 == null) return;
 		clearSvgAsset();
         svgAsset = SVGAsset.Load(TxtFile2.text);
+		for (int i = 1; i < svgAsset.Count; i++) {
+			GameObject svgGameObject = Instantiate(preview.gameObject, preview.transform.position, preview.transform.rotation, gameMap.contentLayer.transform);
+			svgGameObject.GetComponent<SVGRenderer>().vectorGraphics = svgAsset[i];
+		}
         preview.vectorGraphics = svgAsset[0];
     }
+
+	public void LoadTest3()
+	{
+		if (TxtFile2 == null) return;
+		clearSvgAsset();
+		svgAsset = SVGAsset.Load(TxtFile3.text);
+		for (int i = 1; i < svgAsset.Count; i++) {
+			GameObject svgGameObject = Instantiate(preview.gameObject, preview.transform.position, preview.transform.rotation, gameMap.contentLayer.transform);
+			svgGameObject.GetComponent<SVGRenderer>().vectorGraphics = svgAsset[i];
+		}
+		preview.vectorGraphics = svgAsset[0];
+	}
 
 	// Use this for initialization
 	void Start () {
