@@ -40,18 +40,20 @@ public class GameCameraCtrl : MonoBehaviour
         if (Input.touchCount == 1)
         {
             var data = Input.GetTouch(0);
-            zoomTouchPos1 = Vector3.zero;
-            zoomTouchPos2 = Vector3.zero;
-            distanceScale = 0f;
-            zoomTouchPos1Flag = false;
-            zoomTouchPos2Flag = false;
+			if (data.phase == TouchPhase.Began) {
+				StopAllCoroutines ();
+				zoomTouchPos1Flag = true;
+				zoomTouchPos1 = data.position;
+				distanceScale = Vector3.Distance (zoomTouchPos1, zoomTouchPos2);
+			} else if (data.phase == TouchPhase.Ended) {
+				zoomTouchPos1 = Vector3.zero;
+				zoomTouchPos2 = Vector3.zero;
+				distanceScale = 0f;
+				zoomTouchPos1Flag = false;
+				zoomTouchPos2Flag = false;
+			}
 
-            if (data.phase == TouchPhase.Began) {
-                StopAllCoroutines();
-                zoomTouchPos1Flag = true;
-                zoomTouchPos1 = data.position;
-                distanceScale = Vector3.Distance(zoomTouchPos1, zoomTouchPos2);
-            }
+			Debug.Log ("data.phase = " + data.phase);
         }
         else if (Input.touchCount == 2)
         {
@@ -70,14 +72,16 @@ public class GameCameraCtrl : MonoBehaviour
                 touchCenter = (zoomTouchPos1 + zoomTouchPos2) / 2;
                 worldCenter = mCamera.ViewportToWorldPoint(mCamera.ScreenToViewportPoint(touchCenter));
             }
+			Debug.Log ("zoomTouchPos1Flag = " + zoomTouchPos1Flag + ", zoomTouchPos2Flag = " + zoomTouchPos2Flag);
             if (zoomTouchPos1Flag == true && zoomTouchPos2Flag == true) {
                 float dis = Vector3.Distance(d1.position, d2.position);
+				Debug.Log ("d1.phase = " + d1.phase + ", d2.phase = " + d2.phase);
                 if (d1.phase == TouchPhase.Moved || d2.phase == TouchPhase.Moved) {
                     float scaleRate = SCREEN_HEIGHT / 2f / mCamera.orthographicSize;
                     float disDiff = (distanceScale - dis) / scaleRate;
                     this.Zoom(disDiff * 10f);
                     Vector3 nowWorldCenter = mCamera.ViewportToWorldPoint(mCamera.ScreenToViewportPoint(touchCenter));
-                    transform.position = transform.position + (worldCenter - nowWorldCenter);
+					mCamera.transform.position = mCamera.transform.position + (worldCenter - nowWorldCenter);
                     this.Slide(0f, 0f);
                 }
                 touchCenter = (d1.position + d2.position) / 2;
