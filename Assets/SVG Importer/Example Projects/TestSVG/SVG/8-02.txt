@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 24.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 600 800" style="enable-background:new 0 0 600 800;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#075EB3;}
+	.st1{fill:#2EADE7;}
+	.st2{fill:#037CB1;}
+	.st3{fill:#DBB9FF;}
+	.st4{fill:#59CCFF;}
+	.st5{fill:#EAB9FD;}
+	.st6{fill:#DDFB4A;}
+	.st7{fill:#1A7304;}
+	.st8{fill:#FFD1E6;}
+	.st9{fill:#AEE6FF;}
+	.st10{fill:#135495;}
+	.st11{fill:#A2BF00;}
+	.st12{fill:#35C90F;}
+	.st13{fill:#053E02;}
+	.st14{fill:#FC9B01;}
+	.st15{fill:#ACFF81;}
+	.st16{fill:#778D00;}
+	.st17{fill:#A6D7F5;}
+	.st18{fill:#AA336D;}
+	.st19{fill:#5CABFD;}
+	.st20{fill:#FF6900;}
+	.st21{fill:#FE2E34;}
+	.st22{fill:#E273F9;}
+	.st23{fill:#FD9EDB;}
+	.st24{fill:#F7CCB0;}
+	.st25{fill:#941DA9;}
+</style>
+<path d="M150 0 L75 200 L225 200 Z" />
+<path class="st11" d="M250 0 L175 300 L325 100 Z" />
+<path d="M350 0 L275 400 L425 200 Z" />
+</svg>

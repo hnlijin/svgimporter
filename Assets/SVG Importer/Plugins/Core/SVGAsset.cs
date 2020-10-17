@@ -1052,6 +1052,9 @@ namespace SVGImporter
         /// </summary>
         public SVGLayer[] layers
         {
+            set {
+                _layers = value;
+            }
             get {
                 return _layers;
             }
@@ -1269,7 +1272,7 @@ namespace SVGImporter
         /// <para>svgText represents the SVG string content</para>
         /// <para>settings holds all the SVG settings</para>
         /// </summary>
-        public static List<SVGAsset> Load(string svgText, SVGImporterSettings settings = null)
+        public static List<SVGAsset> Load(string svgText, SVGImporterSettings settings = null, int sliceLayerNum = 100)
         {
 #if UNITY_EDITOR
             if(!Application.isPlaying)
@@ -1376,9 +1379,11 @@ namespace SVGImporter
 
                 // Create actual Mesh
                 Shader[] outputShaders;
-                SVGMesh.CombineMeshes(SVGGraphics.layers.ToArray(), out meshs, out outputShaders, asset._useGradients, asset._format, asset._compressDepth, asset._antialiasing);
+                SVGLayer[] layers = SVGGraphics.layers.ToArray();
+                SVGMesh.CombineMeshes(layers, out meshs, out outputShaders, asset._useGradients, asset._format, asset._compressDepth, asset._antialiasing, sliceLayerNum);
                 if(meshs.Length <= 0) return null;
                 Mesh mesh = meshs[0];
+                asset.layers = layers;
 
                 if(asset._useGradients == SVGUseGradients.Always)
                 {

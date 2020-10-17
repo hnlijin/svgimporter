@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
  
 [RequireComponent(typeof(Camera))]
 public class GameCameraCtrl : MonoBehaviour
@@ -7,11 +8,11 @@ public class GameCameraCtrl : MonoBehaviour
     Camera mCamera = null;
     float SCREEN_WIDTH = 1920f;//屏幕宽度
     float SCREEN_HEIGHT = 1080f; // 屏幕高度
-    const float max_allow_width = 7.5f; // 最大允许滑动的宽度
-    const float max_allow_height = 11.25f; // 最大允许滑动的高度
+    const float max_allow_width = 33.75f; // 最大允许滑动的宽度
+    const float max_allow_height = 41.24f; // 最大允许滑动的高度
     public Vector2 touchCenter = Vector2.zero; //缩放的屏幕中心点
     public Vector3 worldCenter = Vector3.zero; //缩放的世界中心点
-    float maxZoom = 7f;
+    float maxZoom = 30f;
     float minZoom = 1f;
     float distanceScale;
     Vector3 zoomTouchPos1;
@@ -34,6 +35,10 @@ public class GameCameraCtrl : MonoBehaviour
  
     void Update()
     {
+        if (EventSystem.current.IsPointerOverGameObject()) {
+            return;
+        }
+
         slideMode = true;
 
         // -------------- for mobile touch input start ----------------------
@@ -72,10 +77,10 @@ public class GameCameraCtrl : MonoBehaviour
                 touchCenter = (zoomTouchPos1 + zoomTouchPos2) / 2;
                 worldCenter = mCamera.ViewportToWorldPoint(mCamera.ScreenToViewportPoint(touchCenter));
             }
-			Debug.Log ("zoomTouchPos1Flag = " + zoomTouchPos1Flag + ", zoomTouchPos2Flag = " + zoomTouchPos2Flag);
+			// Debug.Log ("zoomTouchPos1Flag = " + zoomTouchPos1Flag + ", zoomTouchPos2Flag = " + zoomTouchPos2Flag);
             if (zoomTouchPos1Flag == true && zoomTouchPos2Flag == true) {
                 float dis = Vector3.Distance(d1.position, d2.position);
-				Debug.Log ("d1.phase = " + d1.phase + ", d2.phase = " + d2.phase);
+				// Debug.Log ("d1.phase = " + d1.phase + ", d2.phase = " + d2.phase);
                 if (d1.phase == TouchPhase.Moved || d2.phase == TouchPhase.Moved) {
                     float scaleRate = SCREEN_HEIGHT / 2f / mCamera.orthographicSize;
                     float disDiff = (distanceScale - dis) / scaleRate;
@@ -115,7 +120,7 @@ public class GameCameraCtrl : MonoBehaviour
                     lastMousePos = pos;
                 }
             } else {
-                if (timeTouch > 0.06f && lastMousePos != Vector2.zero) {
+                if (false && timeTouch > 0.06f && lastMousePos != Vector2.zero) {
                     Vector2 pos = Input.mousePosition;
                     Vector2 diff = lastMousePos - pos;
                     diff *= SCREEN_HEIGHT / 2 / mCamera.orthographicSize * timeTouch * 0.05f;
@@ -126,7 +131,7 @@ public class GameCameraCtrl : MonoBehaviour
             }
             // zoom out
             if (Input.GetAxis("Mouse ScrollWheel") < 0) {
-                Debug.Log("Time.deltaTime = " + Time.deltaTime);
+                // Debug.Log("Time.deltaTime = " + Time.deltaTime);
                 this.Zoom(Time.deltaTime * 50f);
                 this.Slide(0f, 0f);
             }

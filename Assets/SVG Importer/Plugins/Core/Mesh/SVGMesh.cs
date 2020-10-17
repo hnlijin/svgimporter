@@ -29,7 +29,7 @@ namespace SVGImporter.Geometry
     
     public class SVGMesh
     {
-        public static bool CombineMeshes(SVGLayer[] layers, out Mesh[] meshs, out Shader[] shaders, SVGUseGradients useGradients = SVGUseGradients.Always, SVGAssetFormat format = SVGAssetFormat.Transparent, bool compressDepth = true, bool antialiased = false)
+        public static bool CombineMeshes(SVGLayer[] layers, out Mesh[] meshs, out Shader[] shaders, SVGUseGradients useGradients = SVGUseGradients.Always, SVGAssetFormat format = SVGAssetFormat.Transparent, bool compressDepth = true, bool antialiased = false, int sliceLayerNum = 100)
         {
             #if DEBUG_IMPORT
             long timeStart = System.DateTime.Now.Ticks;
@@ -140,7 +140,6 @@ namespace SVGImporter.Geometry
             
             int totalVertices = 0, vertexCount, vertexStart = 0, currentVertex;
             int layerIndex = 0;
-            const int sliceLayerNum = 300; // 分层个数
             List<SliceVerticeData> sliceLayerList = new List<SliceVerticeData>();
             for(int i = 0; i < totalLayers; i++)
             {
@@ -425,7 +424,7 @@ namespace SVGImporter.Geometry
                 {
                     if (i % sliceLayerNum == 0) {
                         lastTriangleIndex = 0;
-                        lastVertexIndex = lastVerticesCount;
+                        lastVertexIndex = 0;
                         vertexStart = 0;
                         layerIndex = i / sliceLayerNum;
                         triangles = verticeDatas[layerIndex].triangles;
