@@ -122,7 +122,7 @@ namespace SVGImporter
                 viewport.size *= SVGAssetImport.meshScale;
 
                 Vector2 offset;
-                SVGGraphics.CorrectSVGLayers(SVGGraphics.layers, viewport, asset, out offset);
+                SVGGraphics.CorrectSVGLayers(SVGGraphics.layers, viewport, asset.ignoreSVGCanvas, asset.pivotPoint, out offset);
 
                 // Handle gradients
                 bool hasGradients = false;

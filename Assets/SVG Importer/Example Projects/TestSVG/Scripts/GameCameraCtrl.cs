@@ -8,11 +8,11 @@ public class GameCameraCtrl : MonoBehaviour
     Camera mCamera = null;
     float SCREEN_WIDTH = 1920f;//屏幕宽度
     float SCREEN_HEIGHT = 1080f; // 屏幕高度
-    const float max_allow_width = 33.75f; // 最大允许滑动的宽度
-    const float max_allow_height = 41.24f; // 最大允许滑动的高度
+    const float max_allow_width = 37.48f; // 最大允许滑动的宽度
+    const float max_allow_height = 48.77f; // 最大允许滑动的高度
     public Vector2 touchCenter = Vector2.zero; //缩放的屏幕中心点
     public Vector3 worldCenter = Vector3.zero; //缩放的世界中心点
-    float maxZoom = 30f;
+    float maxZoom = 45f;
     float minZoom = 1f;
     float distanceScale;
     Vector3 zoomTouchPos1;
@@ -35,7 +35,7 @@ public class GameCameraCtrl : MonoBehaviour
  
     void Update()
     {
-        if (EventSystem.current.IsPointerOverGameObject()) {
+        if (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject()) {
             return;
         }
 

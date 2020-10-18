@@ -22,7 +22,8 @@ public class RealtimeImportDemo : MonoBehaviour {
         //     Destroy(svgAsset[0]);
         // }
 
-        svgAsset = SVGAsset.Load(TxtFile.text);
+        svgAsset = new List<SVGAsset>();
+        StartCoroutine(SVGAsset.Load(TxtFile.text, svgAsset, null, 100));
         Debug.Log("load svg asset count: " + svgAsset.Count);
         for (int i = 1; i < svgAsset.Count; i++) {
             SVGImage newSVGImage = Instantiate(preview, preview.transform.position, preview.transform.rotation, preview.transform.parent);

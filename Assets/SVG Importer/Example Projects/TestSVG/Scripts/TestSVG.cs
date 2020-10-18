@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using SVGImporter;
 
 public class TestSVG : MonoBehaviour {
 
@@ -13,6 +14,7 @@ public class TestSVG : MonoBehaviour {
 	public TextAsset TxtFile5;
 	public TextAsset TxtFile7;
 	public TextAsset TxtFile8;
+	public TextAsset TxtFile3Data;
 
 	public void LoadTest1()
     {
@@ -24,38 +26,62 @@ public class TestSVG : MonoBehaviour {
     {
 		if (TxtFile2 == null) return;
 		gameMap.ParseSVGAsset(TxtFile2.text);
+		// 
     }
 
 	public void LoadTest3()
 	{
-		if (TxtFile2 == null) return;
+		if (TxtFile3 == null) return;
+		gameMap.onGameMapChanged += LoadGameMapComplete3;
 		gameMap.ParseSVGAsset(TxtFile3.text);
-		StartCoroutine(DoFillFunction());
 	}
 
-	IEnumerator DoFillFunction() 
+	protected void LoadGameMapComplete3(GameMap map) 
 	{
-		yield return new WaitForEndOfFrame();
-		gameMap.FillColor(483, GameMap.EmptyColor);
-		gameMap.FillColor(484, GameMap.EmptyColor);
-		gameMap.FillColor(485, GameMap.EmptyColor);
-		gameMap.FillColor(495, GameMap.EmptyColor);
-		gameMap.AddCollider2D(483);
-		gameMap.AddCollider2D(484);
-		gameMap.AddCollider2D(485);
-		gameMap.AddCollider2D(495);
+		gameMap.onGameMapChanged -= LoadGameMapComplete3;
+
+		string jsonStr = "{\"list\":" + TxtFile3Data.text + "}";
+		Response<FillDataItem> data = JsonUtility.FromJson<Response<FillDataItem>>(jsonStr);
+		int index = 0;
+		if (data.list != null && data.list.Count > 0) {
+			for (int i = 0; i < data.list[index].p.Count; i++) {
+				gameMap.FillColor(data.list[index].p[i], GameMap.EmptyColor);
+				gameMap.AddCollider2D(data.list[index].p[i]);
+			}
+		}
+		Color fillColor;
+		ColorUtility.TryParseHtmlString(data.list[index].c, out fillColor);
+		gameMap.setFillColor(fillColor);
+
+		// gameMap.svgPreview.GetComponent<SVGRenderer>().onVectorGraphicsChanged(null);
+
+		// gameMap.FillColor(483, GameMap.EmptyColor);
+		// gameMap.FillColor(484, GameMap.EmptyColor);
+		// gameMap.FillColor(485, GameMap.EmptyColor);
+		// gameMap.FillColor(495, GameMap.EmptyColor);
+		// gameMap.AddCollider2D(483);
+		// gameMap.AddCollider2D(484);
+		// gameMap.AddCollider2D(485);
+		// gameMap.AddCollider2D(495);
 	}
 
 	public void LoadTest4()
 	{
-		if (TxtFile2 == null) return;
+		if (TxtFile4 == null) return;
 		gameMap.ParseSVGAsset(TxtFile4.text);
 	}
 
 	public void LoadTest5()
 	{
-		if (TxtFile2 == null) return;
+		if (TxtFile5 == null) return;
+		gameMap.onGameMapChanged += LoadGameMapComplete5;
 		gameMap.ParseSVGAsset(TxtFile5.text);
+	}
+
+	protected void LoadGameMapComplete5(GameMap map) 
+	{
+		gameMap.onGameMapChanged -= LoadGameMapComplete5;
+		gameMap.AddCollider2D(3);
 	}
 
 	public void LoadTest6() {
@@ -74,6 +100,8 @@ public class TestSVG : MonoBehaviour {
 
 	public void LoadTest8()
 	{
+		if (TxtFile8 == null) return;
+		gameMap.ParseSVGAsset(TxtFile8.text);
 	}
 
 	public void LoadTest9()
@@ -81,7 +109,7 @@ public class TestSVG : MonoBehaviour {
 	}
 
 	public void TestSVG_40_40() {
-		gameMap.ClearContentLayer();
+		gameMap.ClearSvgAsset();
 		for (int i = -20; i < 20; i++) {
 			for (int j = -20; j < 20; j++) {
 				Vector3 p3 = svgObject.transform.position;
@@ -94,7 +122,7 @@ public class TestSVG : MonoBehaviour {
 	}
 
 	public void TestSVG_20_20() {
-		gameMap.ClearContentLayer();
+		gameMap.ClearSvgAsset();
 		Vector3 vec3 = new Vector3 (0.2f, 0.2f);
 		for (int i = -10; i < 10; i++) {
 			for (int j = -10; j < 10; j++) {
@@ -109,7 +137,7 @@ public class TestSVG : MonoBehaviour {
 	}
 
 	public void TestSVG_10_10() {
-		gameMap.ClearContentLayer();
+		gameMap.ClearSvgAsset();
 		Vector3 vec3 = new Vector3 (0.3f, 0.3f);
 		for (int i = -5; i < 5; i++) {
 			for (int j = -5; j < 5; j++) {

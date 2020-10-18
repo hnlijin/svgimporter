@@ -1,5 +1,4 @@
-
-
+using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,14 +28,14 @@ namespace SVGImporter.Geometry
     
     public class SVGMesh
     {
-        public static bool CombineMeshes(SVGLayer[] layers, out Mesh[] meshs, out Shader[] shaders, SVGUseGradients useGradients = SVGUseGradients.Always, SVGAssetFormat format = SVGAssetFormat.Transparent, bool compressDepth = true, bool antialiased = false, int sliceLayerNum = 100)
+        public static IEnumerator CombineMeshes(SVGLayer[] layers, Action<Mesh[]> resultMeshs, Action<Shader[]> resultShaders, SVGUseGradients useGradients = SVGUseGradients.Always, SVGAssetFormat format = SVGAssetFormat.Transparent, bool compressDepth = true, bool antialiased = false, int sliceLayerNum = 1)
         {
             #if DEBUG_IMPORT
             long timeStart = System.DateTime.Now.Ticks;
             #endif
             
-            shaders = new Shader[0];
-            meshs = null;
+            Shader[] shaders = new Shader[0];
+            Mesh[] meshs = null;
             //if(SVGAssetImport.sliceMesh) Create9Slice();
             
             SVGFill fill;
@@ -44,7 +43,7 @@ namespace SVGImporter.Geometry
             bool useTransparentShader = false;
             bool hasGradients = (useGradients == SVGUseGradients.Always);
             
-            if(layers == null) return false;
+            if(layers == null) yield break;
             int totalLayers = layers.Length, totalTriangles = 0, opaqueTriangles = 0, transparentTriangles = 0;
             FILL_BLEND lastBlendType = FILL_BLEND.ALPHA_BLENDED;
             
@@ -65,6 +64,7 @@ namespace SVGImporter.Geometry
                             quadTreeBounds.Encapsulate(shape.bounds.center, shape.bounds.size);
                         }
                     }
+                    yield return new WaitForEndOfFrame();
                     
                     quadTreeBounds.size *= 1.2f;
                     
@@ -113,6 +113,7 @@ namespace SVGImporter.Geometry
                                 layers[i].shapes[j] = shape;
                             }
                         }
+                        yield return new WaitForEndOfFrame();
                     }
                 } else {
                     int highestDepth = 0;
@@ -135,6 +136,7 @@ namespace SVGImporter.Geometry
                             layers[i].shapes[j] = shape;
                         }
                     }
+                    yield return new WaitForEndOfFrame();
                 }
             }
             
@@ -147,7 +149,7 @@ namespace SVGImporter.Geometry
                     layerIndex = i / sliceLayerNum;
                     SliceVerticeData sliceLayerData = new SliceVerticeData();
                     sliceLayerList.Add(sliceLayerData);
-                    Debug.Log("i = " + i + ", layerIndex = " + layerIndex + ", totalVertices = " + totalVertices);
+                    // Debug.Log("i = " + i + ", layerIndex = " + layerIndex + ", totalVertices = " + totalVertices);
                     totalVertices = 0;
                     transparentTriangles = 0;
                     opaqueTriangles = 0;
@@ -171,6 +173,7 @@ namespace SVGImporter.Geometry
                 sliceLayerList[layerIndex].transparentTriangles = transparentTriangles;
                 sliceLayerList[layerIndex].opaqueTriangles = opaqueTriangles;
             }
+            yield return new WaitForEndOfFrame();
             
             if(useGradients == SVGUseGradients.Never) hasGradients = false;
             if(format != SVGAssetFormat.Opaque)
@@ -234,6 +237,7 @@ namespace SVGImporter.Geometry
                     verticeDatas[m].uv2 = new Vector2[totalVertices];
                 }
             }
+            yield return new WaitForEndOfFrame();
 
             Vector3[] vertices = null;
             Color32[] colors32 = null;
@@ -377,6 +381,7 @@ namespace SVGImporter.Geometry
                     vertexStart += vertexCount;
                 }
             }
+            yield return new WaitForEndOfFrame();
             
             int[][] triangles = null;
 
@@ -414,6 +419,7 @@ namespace SVGImporter.Geometry
                         lastVertexIndex += layers[i].shapes[j].vertices.Length;
                     }
                 }
+                yield return new WaitForEndOfFrame();
             } else {
                 int lastVertexIndex = 0;
                 int triangleCount;
@@ -440,6 +446,7 @@ namespace SVGImporter.Geometry
                         lastVertexIndex += lastVerticesCount;
                     }
                 }
+                yield return new WaitForEndOfFrame();
             }
             
             if(outputShaders.Count != 0) shaders = outputShaders.ToArray();
@@ -459,19 +466,20 @@ namespace SVGImporter.Geometry
                 normals = verticeDatas[n].normals;
                 triangles = verticeDatas[n].triangles;
 
+                if(vertices != null) {
+                    if(vertices.Length > 65000) {
+                        Debug.LogError("A mesh may not have more than 65000 vertices. Please try to reduce quality or split SVG file.");
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+
                 Mesh mesh = new Mesh();   
                 mesh.Clear();
                 mesh.MarkDynamic();
                 meshs[n] = mesh;
 
-                if(vertices != null) {
-                    if(vertices.Length > 65000) {
-                        Debug.LogError("A mesh may not have more than 65000 vertices. Please try to reduce quality or split SVG file.");
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
                 mesh.vertices = vertices;
                 mesh.colors32 = colors32;
                 if(uv != null) {
@@ -492,13 +500,16 @@ namespace SVGImporter.Geometry
                     }
                 }
             }
+
+            resultMeshs(meshs);
+            resultShaders(shaders);
             
             #if DEBUG_IMPORT
             System.TimeSpan timeSpan = new System.TimeSpan(System.DateTime.Now.Ticks - timeStart);
-            Debug.Log("Mesh combination took: "+timeSpan.TotalSeconds +"s");
+            Debug.Log("Mesh combination took: " + timeSpan.TotalSeconds + "s");
             #endif
             
-            return true;
+            yield break;
         }
 
         public static bool CombineMeshes(SVGLayer[] layers, Mesh mesh, out Shader[] shaders, SVGUseGradients useGradients = SVGUseGradients.Always, SVGAssetFormat format = SVGAssetFormat.Transparent, bool compressDepth = true, bool antialiased = false)

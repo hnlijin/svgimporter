@@ -1,7 +1,4 @@
-
-
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Serialization;
 
 using System.Collections;
@@ -1272,17 +1269,9 @@ namespace SVGImporter
         /// <para>svgText represents the SVG string content</para>
         /// <para>settings holds all the SVG settings</para>
         /// </summary>
-        public static List<SVGAsset> Load(string svgText, SVGImporterSettings settings = null, int sliceLayerNum = 100)
+        public static IEnumerator Load(string svgText, List<SVGAsset> svgAssets, SVGImporterSettings settings = null, int sliceLayerNum = 100)
         {
-#if UNITY_EDITOR
-            if(!Application.isPlaying)
-            {
-                Debug.LogWarning("SVG Asset Load works only in playmode!");
-                return null;
-            }
-#endif
-            if(string.IsNullOrEmpty(svgText)) return null;
-
+            if(string.IsNullOrEmpty(svgText)) yield break;
             if(settings == null)
             {
                 SVGAssetImport.format = SVGAssetFormat.Transparent;
@@ -1308,7 +1297,7 @@ namespace SVGImporter
             }
 
             SVGGraphics graphics = new SVGGraphics(1000f, SVGAssetImport.antialiasing);
-            SVGDocument svgDocument = null;
+            yield return new WaitForEndOfFrame();
 
             SVGAssetImport.Clear();
             SVGAssetImport.atlasData = new SVGAtlasData();
@@ -1317,20 +1306,16 @@ namespace SVGImporter
             SVGParser.Init();
             SVGGraphics.Init();
             
-            SVGElement rootSVGElement = null;
             List<SVGError> errors = new List<SVGError>();
-
-            svgDocument = new SVGDocument(svgText, graphics);
-            rootSVGElement = svgDocument.rootElement;
-
-            if(rootSVGElement == null)
-            {
+            SVGDocument svgDocument = new SVGDocument(svgText, graphics);
+            SVGElement rootSVGElement = svgDocument.rootElement;
+            if(rootSVGElement == null) {
                 Debug.LogError("SVG Document is corrupted!");
-                return null;
+                yield break;
             }
+            yield return new WaitForEndOfFrame();
 
             SVGAsset asset = ScriptableObject.CreateInstance<SVGAsset>();
-
             asset._antialiasing = SVGAssetImport.antialiasing;
             asset._border = SVGAssetImport.border;
             asset._compressDepth = SVGAssetImport.compressDepth;
@@ -1343,9 +1328,7 @@ namespace SVGImporter
             asset._pivotPoint = SVGAssetImport.pivotPoint;
             asset._vpm = SVGAssetImport.vpm;
             asset._sharedGradients = null;
-
-            if(settings != null)
-            {
+            if(settings != null) {
                 asset._generateCollider = settings.defaultGenerateCollider;
                 asset._generateNormals = settings.defaultGenerateNormals;
                 asset._generateTangents = settings.defaultGenerateTangents;
@@ -1361,159 +1344,157 @@ namespace SVGImporter
                 asset._keepSVGFile = false;
             }
 
+            rootSVGElement.Render();
+            yield return new WaitForEndOfFrame();
+
+            Rect viewport = rootSVGElement.paintable.viewport;
+            viewport.x *= SVGAssetImport.meshScale;
+            viewport.y *= SVGAssetImport.meshScale;
+            viewport.size *= SVGAssetImport.meshScale;
+
+            Vector2 offset;
+            SVGGraphics.CorrectSVGLayers(SVGGraphics.layers, viewport, asset.ignoreSVGCanvas, asset.pivotPoint, out offset);
+            yield return new WaitForEndOfFrame();
+
+            // Handle gradients
+            bool hasGradients = (asset.useGradients == SVGUseGradients.Always);
+
+            // Create actual Mesh
+            Shader[] outputShaders = null;
+            SVGLayer[] layers = SVGGraphics.layers.ToArray();
             Mesh[] meshs = null;
+            IEnumerator enumerator = SVGMesh.CombineMeshes(layers, (ms) => meshs = ms, (osh) => outputShaders = osh, asset._useGradients, asset._format, asset._compressDepth, asset._antialiasing, sliceLayerNum);
+            yield return enumerator;
+            if(meshs.Length <= 0) yield break;
+            Mesh mesh = meshs[0];
+            asset.layers = layers;
 
-            try {
-                rootSVGElement.Render();
-
-                Rect viewport = rootSVGElement.paintable.viewport;
-                viewport.x *= SVGAssetImport.meshScale;
-                viewport.y *= SVGAssetImport.meshScale;
-                viewport.size *= SVGAssetImport.meshScale;
-
-                Vector2 offset;
-                SVGGraphics.CorrectSVGLayers(SVGGraphics.layers, viewport, asset, out offset);
-
-                // Handle gradients
-                bool hasGradients = (asset.useGradients == SVGUseGradients.Always);
-
-                // Create actual Mesh
-                Shader[] outputShaders;
-                SVGLayer[] layers = SVGGraphics.layers.ToArray();
-                SVGMesh.CombineMeshes(layers, out meshs, out outputShaders, asset._useGradients, asset._format, asset._compressDepth, asset._antialiasing, sliceLayerNum);
-                if(meshs.Length <= 0) return null;
-                Mesh mesh = meshs[0];
-                asset.layers = layers;
-
-                if(asset._useGradients == SVGUseGradients.Always)
+            if(asset._useGradients == SVGUseGradients.Always)
+            {
+                if(outputShaders != null)
                 {
-                    if(outputShaders != null)
+                    for(int i = 0; i < outputShaders.Length; i++)
                     {
-                        for(int i = 0; i < outputShaders.Length; i++)
+                        if(outputShaders[i] == null) continue;
+                        if(outputShaders[i].name == SVGShader.SolidColorOpaque.name)
                         {
-                            if(outputShaders[i] == null) continue;
-                            if(outputShaders[i].name == SVGShader.SolidColorOpaque.name)
-                            {
-                                outputShaders[i] = SVGShader.GradientColorOpaque;
-                            } else if(outputShaders[i].name == SVGShader.SolidColorAlphaBlended.name)
-                            {
-                                outputShaders[i] = SVGShader.GradientColorAlphaBlended;
-                            } else if(outputShaders[i].name == SVGShader.SolidColorAlphaBlendedAntialiased.name)
-                            {
-                                outputShaders[i] = SVGShader.GradientColorAlphaBlendedAntialiased;
-                            }
-                        }
-                    }
-                    hasGradients = true;
-                } else {
-                    if(outputShaders != null)
-                    {
-                        for(int i = 0; i < outputShaders.Length; i++)
+                            outputShaders[i] = SVGShader.GradientColorOpaque;
+                        } else if(outputShaders[i].name == SVGShader.SolidColorAlphaBlended.name)
                         {
-                            if(outputShaders[i] == null) continue;
-                            if(outputShaders[i].name == SVGShader.GradientColorOpaque.name ||
-                               outputShaders[i].name == SVGShader.GradientColorAlphaBlended.name ||
-                               outputShaders[i].name == SVGShader.GradientColorAlphaBlendedAntialiased.name)
-                            {
-                                hasGradients = true;
-                                break;
-                            }
+                            outputShaders[i] = SVGShader.GradientColorAlphaBlended;
+                        } else if(outputShaders[i].name == SVGShader.SolidColorAlphaBlendedAntialiased.name)
+                        {
+                            outputShaders[i] = SVGShader.GradientColorAlphaBlendedAntialiased;
                         }
                     }
                 }
-
-                if(!asset.useLayers)
+                hasGradients = true;
+            } else {
+                if(outputShaders != null)
                 {
-                    asset._sharedMesh = mesh;
-                }
-
-                if(outputShaders != null && outputShaders.Length > 0)
-                {
-                    asset._sharedShaders = new string[outputShaders.Length];
-                    if(hasGradients)
+                    for(int i = 0; i < outputShaders.Length; i++)
                     {
-                        for(int i = 0; i < outputShaders.Length; i++)
+                        if(outputShaders[i] == null) continue;
+                        if(outputShaders[i].name == SVGShader.GradientColorOpaque.name ||
+                        outputShaders[i].name == SVGShader.GradientColorAlphaBlended.name ||
+                        outputShaders[i].name == SVGShader.GradientColorAlphaBlendedAntialiased.name)
                         {
-                            asset._sharedShaders[i] = outputShaders[i].name;
-                        }
-                    } else {
-                        for(int i = 0; i < outputShaders.Length; i++)
-                        {
-                            if(outputShaders[i].name == SVGShader.GradientColorAlphaBlended.name)
-                            {
-                                outputShaders[i] = SVGShader.SolidColorAlphaBlended;
-                            } else if(outputShaders[i].name == SVGShader.GradientColorAlphaBlendedAntialiased.name)
-                            {
-                                outputShaders[i] = SVGShader.SolidColorAlphaBlendedAntialiased;                                
-                            } else if(outputShaders[i].name == SVGShader.GradientColorOpaque.name)
-                            {
-                                outputShaders[i] = SVGShader.SolidColorOpaque;                                
-                            }
-                            asset._sharedShaders[i] = outputShaders[i].name;
+                            hasGradients = true;
+                            break;
                         }
                     }
                 }
+            }
 
-                // Handle Canvas Rectangle
-                asset._canvasRectangle = new Rect(viewport.x, viewport.y, viewport.size.x, viewport.size.y);
-                
-                if(asset.generateCollider)
-                {
-                    // Create polygon contour
-                    if(SVGGraphics.paths != null && SVGGraphics.paths.Count > 0)
-                    {
-                        List<List<Vector2>> polygons = new List<List<Vector2>>();
-                        for(int i = 0; i < SVGGraphics.paths.Count; i++)
-                        {
-                            Vector2[] points = SVGGraphics.paths[i].points;
-                            for(int j = 0; j < points.Length; j++)
-                            {
-                                points[j].x = points[j].x * SVGAssetImport.meshScale - offset.x;
-                                points[j].y = (points[j].y * SVGAssetImport.meshScale + offset.y) * -1f;
-                            }
-                            
-                            polygons.Add(new List<Vector2>(points));
-                        }
-                        
-                        polygons = SVGGeom.MergePolygon(polygons);
-                        
-                        SVGPath[] paths = new SVGPath[polygons.Count];
-                        for(int i = 0; i < polygons.Count; i++)
-                        {
-                            paths[i] = new SVGPath(polygons[i].ToArray());
-                        }
+            if(!asset.useLayers)
+            {
+                asset._sharedMesh = mesh;
+            }
 
-                        if(paths != null && paths.Length > 0)
-                        {
-                            asset._colliderShape = paths;
-                        }
-                    }
-                }
-
+            if(outputShaders != null && outputShaders.Length > 0)
+            {
+                asset._sharedShaders = new string[outputShaders.Length];
                 if(hasGradients)
                 {
-                    if(SVGAssetImport.atlasData.gradientCache != null && SVGAssetImport.atlasData.gradientCache.Count > 0)
+                    for(int i = 0; i < outputShaders.Length; i++)
                     {
-                        int gradientsCount = SVGAssetImport.atlasData.gradientCache.Count;
-                        CCGradient[] gradients = new CCGradient[gradientsCount];
-                        int i = 0;
-                        foreach(KeyValuePair<string, CCGradient> entry in SVGAssetImport.atlasData.gradientCache)
+                        asset._sharedShaders[i] = outputShaders[i].name;
+                    }
+                } else {
+                    for(int i = 0; i < outputShaders.Length; i++)
+                    {
+                        if(outputShaders[i].name == SVGShader.GradientColorAlphaBlended.name)
                         {
-                            gradients[i++] = entry.Value;
+                            outputShaders[i] = SVGShader.SolidColorAlphaBlended;
+                        } else if(outputShaders[i].name == SVGShader.GradientColorAlphaBlendedAntialiased.name)
+                        {
+                            outputShaders[i] = SVGShader.SolidColorAlphaBlendedAntialiased;                                
+                        } else if(outputShaders[i].name == SVGShader.GradientColorOpaque.name)
+                        {
+                            outputShaders[i] = SVGShader.SolidColorOpaque;                                
                         }
-                        asset._sharedGradients = gradients;
+                        asset._sharedShaders[i] = outputShaders[i].name;
                     }
                 }
-            } catch(System.Exception exception) {
-                Debug.LogWarning("Asset Failed to import\n"+exception.Message);
-                errors.Add(SVGError.CorruptedFile);
+            }
+
+            // Handle Canvas Rectangle
+            asset._canvasRectangle = new Rect(viewport.x, viewport.y, viewport.size.x, viewport.size.y);
+            
+            if(asset.generateCollider)
+            {
+                // Create polygon contour
+                if(SVGGraphics.paths != null && SVGGraphics.paths.Count > 0)
+                {
+                    List<List<Vector2>> polygons = new List<List<Vector2>>();
+                    for(int i = 0; i < SVGGraphics.paths.Count; i++)
+                    {
+                        Vector2[] points = SVGGraphics.paths[i].points;
+                        for(int j = 0; j < points.Length; j++)
+                        {
+                            points[j].x = points[j].x * SVGAssetImport.meshScale - offset.x;
+                            points[j].y = (points[j].y * SVGAssetImport.meshScale + offset.y) * -1f;
+                        }
+                        
+                        polygons.Add(new List<Vector2>(points));
+                    }
+                    
+                    polygons = SVGGeom.MergePolygon(polygons);
+                    
+                    SVGPath[] paths = new SVGPath[polygons.Count];
+                    for(int i = 0; i < polygons.Count; i++)
+                    {
+                        paths[i] = new SVGPath(polygons[i].ToArray());
+                    }
+
+                    if(paths != null && paths.Length > 0)
+                    {
+                        asset._colliderShape = paths;
+                    }
+                    yield return new WaitForEndOfFrame();
+                }
+            }
+
+            if(hasGradients)
+            {
+                if(SVGAssetImport.atlasData.gradientCache != null && SVGAssetImport.atlasData.gradientCache.Count > 0)
+                {
+                    int gradientsCount = SVGAssetImport.atlasData.gradientCache.Count;
+                    CCGradient[] gradients = new CCGradient[gradientsCount];
+                    int i = 0;
+                    foreach(KeyValuePair<string, CCGradient> entry in SVGAssetImport.atlasData.gradientCache)
+                    {
+                        gradients[i++] = entry.Value;
+                    }
+                    asset._sharedGradients = gradients;
+                    yield return new WaitForEndOfFrame();
+                }
             }
 
             asset._documentAsset = SVGDocumentAsset.CreateInstance(svgText, errors.ToArray());
             if(svgDocument != null) svgDocument.Clear();
             SVGAssetImport.Clear();
 
-            List<SVGAsset> svgAssets = new List<SVGAsset>();
             svgAssets.Add(asset);
 
             if (meshs != null) {
@@ -1524,11 +1505,12 @@ namespace SVGImporter
                         if(!newAsset.useLayers) {
                             newAsset._sharedMesh = meshs[i];
                         }
+                        yield return new WaitForEndOfFrame();
                     }
                 }
             }
-            
-            return svgAssets;
+
+            yield return svgAssets;
         }
 
     #if UNITY_EDITOR
