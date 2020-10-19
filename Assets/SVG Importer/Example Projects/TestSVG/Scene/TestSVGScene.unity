@@ -593,6 +593,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2370593f8ac08274c99634b8e82d1158, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cameraCtrl: {fileID: 1209065788}
   contentLayer: {fileID: 1185040407}
   colliderLayer: {fileID: 1325021298}
   tipLayer: {fileID: 1420914466}

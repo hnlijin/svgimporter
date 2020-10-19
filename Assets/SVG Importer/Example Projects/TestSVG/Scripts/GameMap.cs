@@ -7,7 +7,7 @@ using SVGImporter.Utils;
 public class GameMap : MonoBehaviour {
 
 	public static Color EmptyColor = new Color(0, 0, 0, 0);
-
+	public GameCameraCtrl cameraCtrl;
 	public GameObject contentLayer;
 	public GameObject colliderLayer;
 	public GameObject tipLayer;
@@ -165,7 +165,7 @@ public class GameMap : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		if (Input.GetMouseButtonDown(0))
+		if (Input.GetMouseButtonDown(0) && cameraCtrl.isTouchMoved() == false)
 		{
 			Vector2 mouseV2 = Camera.main.ScreenToWorldPoint (Input.mousePosition);
 			RaycastHit2D hit = Physics2D.Raycast(mouseV2, Vector2.zero);
